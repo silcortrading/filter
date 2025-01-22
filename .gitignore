@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+instance/
+UPLOADS/
+downloads/
+conv_EXCEL_XML/
+conv_XML_XML/

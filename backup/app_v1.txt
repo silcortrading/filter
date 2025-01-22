@@ -1,0 +1,217 @@
+import os
+import pandas as pd
+import xml.etree.ElementTree as ET
+from flask import Flask, render_template, request, redirect, url_for, flash, send_from_directory
+import xml.dom.minidom
+import glob
+from werkzeug.utils import secure_filename
+import time
+import logging
+import re
+
+app = Flask(__name__)
+
+# Configurações
+UPLOAD_FOLDER = 'uploads'
+DOWNLOAD_FOLDER = 'downloads'
+ALLOWED_EXTENSIONS = {'xlsx', 'xml'}
+CONV_XML_XML = 'conv_XML_XML'
+CONV_EXCEL_XML = 'conv_EXCEL_XML'
+
+# Criar pastas se não existirem
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(CONV_XML_XML, exist_ok=True)
+os.makedirs(CONV_EXCEL_XML, exist_ok=True)
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['CONV_EXCEL_XML'] = CONV_EXCEL_XML
+app.config['CONV_XML_XML'] = CONV_XML_XML
+app.secret_key = os.getenv('SECRET_KEY', 'default_key')  # Utilizando variável de ambiente para segurança
+
+# Configuração de logs
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Função para verificar extensão do arquivo
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+# Função para obter o próximo número de arquivo disponível
+def get_next_filename():
+    existing_files = glob.glob(os.path.join(app.config['CONV_XML_XML'], "XML_convertido_*.xml"))
+    numbers = [int(file.split("_")[-1].split(".")[0]) for file in existing_files]
+    return max(numbers) + 1 if numbers else 1
+
+# Função para converter Excel em XML com colunas específicas, tags numeradas e LOTE
+def convert_excel_to_xml(filepath):
+    # Carregar Excel com pandas
+    df = pd.read_excel(filepath, header=None)
+
+    # Selecionar apenas as colunas A e D (colunas 0 e 3 no índice zero-based)
+    selected_columns = df.iloc[:, [0, 3]]
+    selected_columns.columns = ['quantidadeItemExcel', 'descricaoItemExcel']  # Renomear colunas
+
+    # Criar elemento raiz do XML
+    root = ET.Element("Root")
+
+    # Ordenar as linhas do DataFrame com base na descrição (ou outro critério desejado)
+    selected_columns = selected_columns.sort_values(by=['descricaoItemExcel'])
+
+    # Iterar pelas linhas do DataFrame
+    item_number = 1  # Inicializa a numeração dos itens
+    for i, row in selected_columns.iterrows():
+        item_element = ET.SubElement(root, f"item{item_number}")  # Cria uma tag para cada linha numerada
+        for column in selected_columns.columns:
+            child = ET.SubElement(item_element, column)
+            child.text = str(row[column]) if pd.notnull(row[column]) else ''
+        
+        # Filtrar o LOTE: XX
+        descricao = row['descricaoItemExcel']
+        lote_match = re.search(r'LOTE:\s*(\w+)', str(descricao))
+        if lote_match:
+            lote_value = lote_match.group(1)
+            lote_element = ET.SubElement(item_element, "lote")
+            lote_element.text = lote_value
+
+        item_number += 1  # Incrementa a numeração do item
+
+    # Obter próximo número de arquivo disponível
+    next_number = get_next_filename()
+    xml_filename = f"XML_CONVERTIDO_EXCEL_{next_number}.xml"
+    xml_filepath = os.path.join(app.config['CONV_EXCEL_XML'], xml_filename)
+
+    # Salvar XML no diretório com formatação
+    dom = xml.dom.minidom.parseString(ET.tostring(root, 'utf-8'))
+    with open(xml_filepath, 'w', encoding='utf-8') as f:
+        f.write(dom.toprettyxml())
+
+    return xml_filename
+
+# Função para filtrar XML e gerar novo XML com conteúdo das tags <descricaoMercadoria>, <quantidade> e <lote>
+def filter_xml_and_generate_new(input_filepath):
+    tree = ET.parse(input_filepath)
+    root = tree.getroot()
+
+    new_root = ET.Element("Root")
+
+    item_number = 1
+    items = []
+
+    # Aqui buscamos as tags <adicao> que contém <descricaoMercadoria> e <quantidade>
+    for adicao in root.findall(".//adicao"):
+        descricao_list = adicao.findall(".//descricaoMercadoria")
+        quantidade_list = adicao.findall(".//quantidade")
+
+        # Para cada par de descricaoMercadoria e quantidade
+        for descricao, quantidade in zip(descricao_list, quantidade_list):
+            item_element = ET.Element(f"item{item_number}")
+
+            # Adicionando a quantidade e descricaoMercadoria
+            quantidade_text = quantidade.text if quantidade is not None else ''
+            quantidade_text = quantidade_text.lstrip('0')  # Remove os zeros à esquerda
+
+            # Dividir o valor por 100.000 para ajustar a quantidade
+            try:
+                quantidade_value = int(quantidade_text) / 100000
+                # Formatar a quantidade para ter 2 casas decimais e usar vírgula
+                quantidade_text = f"{quantidade_value:.2f}".replace('.', ',')
+            except ValueError:
+                quantidade_text = '0'  # Caso a quantidade não seja numérica, define como 0
+
+            quantidade_element = ET.SubElement(item_element, "quantidade")
+            quantidade_element.text = quantidade_text
+
+            descricao_text = descricao.text.strip() if descricao is not None else ''
+            descricao_element = ET.SubElement(item_element, "descricaoMercadoria")
+            descricao_element.text = descricao_text
+
+            # Filtrando e adicionando o LOTE, se presente
+            lote_match = re.search(r'LOTE:\s*(\w+)', str(descricao.text))
+            if lote_match:
+                lote_value = lote_match.group(1)
+                lote_element = ET.SubElement(item_element, "lote")
+                lote_element.text = lote_value
+
+            items.append(item_element)
+            item_number += 1
+
+    # Ordenar os itens com base na descrição
+    items.sort(key=lambda x: x.find("descricaoMercadoria").text.lower() if x.find("descricaoMercadoria") is not None else "")
+
+    # Garantir que a numeração dos itens seja sequencial e igual para as listas
+    for idx, item in enumerate(items, start=1):
+        item.tag = f"item{idx}"
+
+    # Adicionar os itens ordenados ao novo XML
+    for item in items:
+        new_root.append(item)
+
+    next_number = get_next_filename()
+    xml_filename = f"XML_CONVERTIDO_XML_{next_number}.xml"
+    xml_filepath = os.path.join(app.config['CONV_XML_XML'], xml_filename)
+
+    tree = ET.ElementTree(new_root)
+    tree.write(xml_filepath, encoding='utf-8', xml_declaration=True)
+
+    dom = xml.dom.minidom.parse(xml_filepath)
+    with open(xml_filepath, 'w', encoding='utf-8') as f:
+        f.write(dom.toprettyxml())
+
+    return xml_filename
+
+@app.route('/excel', methods=['GET', 'POST'])
+def upload_excel_file():
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            flash('Nenhum arquivo foi selecionado.')
+            return redirect(request.url)
+
+        file = request.files['file']
+
+        if file.filename == '':
+            flash('Nenhum arquivo foi selecionado.')
+            return redirect(request.url)
+
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], f"{int(time.time())}_{filename}")
+            file.save(filepath)
+
+            try:
+                xml_filename = convert_excel_to_xml(filepath)
+                flash('Arquivo Excel convertido com sucesso!')
+                return render_template('index.html', xml_filename=xml_filename)
+            except Exception as e:
+                flash(f'Erro ao converter o arquivo Excel: {e}')
+
+    return render_template('index.html')
+
+@app.route('/', methods=['GET', 'POST'])
+def upload_xml_file():
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            flash('Nenhum arquivo foi selecionado.')
+            return redirect(request.url)
+
+        file = request.files['file']
+
+        if file.filename == '':
+            flash('Nenhum arquivo foi selecionado.')
+            return redirect(request.url)
+
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], f"{int(time.time())}_{filename}")
+            file.save(filepath)
+
+            try:
+                filtered_xml_filename = filter_xml_and_generate_new(filepath)
+                flash('Arquivo XML filtrado com sucesso!')
+                return render_template('index.html', filtered_xml_filename=filtered_xml_filename)
+            except Exception as e:
+                flash(f'Erro ao filtrar o arquivo XML: {e}')
+
+    return render_template('index.html')
+
+if __name__ == '__main__':
+    app.run(debug=True)

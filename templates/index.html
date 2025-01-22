@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../style.css">
+    <title>Conversor Excel para XML e Filtragem de XML</title>
+    <style>
+        /* Configurações Gerais */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+            color: #212529;
+            line-height: 1.6;
+        }
+
+        h1 {
+            font-size: 2rem;
+            color: #343a40;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        h2 {
+            margin-bottom: 5px;
+            margin-top: 0px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            color: #6c757d;
+        }
+
+        /* Estilo dos Formulários */
+        .container-forms {
+            background: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .container-forms h3 {
+            font-size: 2rem;
+        }
+
+        .container-forms a {
+            font-size: 1.2rem;
+        }
+
+        input[type="file"] {
+            padding: 10px;
+            width: 95.3%;
+            font-size: 1rem;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+            cursor: pointer;
+            transition: border-color 0.2s ease;
+        }
+
+        input[type="file"]:hover {
+            border-color: #007bff;
+        }
+
+        a {
+            text-decoration: none;
+            padding: 5px 10px;
+            background-color: #007bff;
+            color: #ffffff;
+            font-size: 1rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        a:hover {
+            background-color: #0056b3;
+        }
+
+
+        .container-buttons {
+            padding: 10px 0px;
+            display: flex;
+            gap: 15px;
+        }
+
+        button {
+            padding: 10px;
+            background-color: #007bff;
+            color: #ffffff;
+            font-size: 1rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        /* Caixa de Aviso */
+        .warning-excel {
+            margin-top: 10px;
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+
+        /* Caixa de Mensagens */
+        .notification {
+            background-color: #e9ecef;
+            border-left: 4px solid #007bff;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+
+        .notification ul {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .notification ul li {
+            font-size: 1rem;
+            color: #495057;
+        }
+
+        /* Estilo do formulário de Limpar Arquivos */
+        .clear-files {
+            display: flex;
+            justify-content: start;
+            flex-direction: column;
+        }
+
+        .clear-files button {
+            background-color: transparent;
+            font-size: 0.5rem;
+            border-radius: 50%;
+            border: none;
+            transition: background-color 0.3s ease-in-out;
+            transition: 0.3s;
+        }
+
+        .clear-files button:hover {
+            transform: scale(1.3);
+        }
+
+        .container-adjusts {
+            display: grid;
+            grid-template-columns: 90% 10%;
+            gap: 20px;
+        }
+
+        /* Responsividade */
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+            }
+
+            input[type="file"], button {
+                font-size: 0.9rem;
+            }
+
+            .clear-files button {
+                font-size: 0.9rem;
+                padding: 8px 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <section class="section">
+        <div class="container">
+            <h1 class="title">Sistema de Conversão e Comparação</h1>
+            <p class="subtitle">Faça upload dos arquivos e processe-os conforme necessário.</p>
+
+            <div class="container-adjusts">
+                <!-- Upload de arquivos Excel -->
+                <div>
+                    <!-- Mensagens de alerta -->
+                    {% with messages = get_flashed_messages() %}
+                    {% if messages %}
+                        <div class="notification">
+                            <ul>
+                                {% for message in messages %}
+                                <li>{{ message }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+                    {% endwith %}
+
+                    <form class="container-forms" id="excelForm" action="/excel" method="post" enctype="multipart/form-data">
+                        <h2>FILTRAR EXCEL</h2>
+                        <input type="file" id="excelFile" name="file" accept=".xls,.xlsx" required>
+                        <div class="warning-excel">
+                            O Excel deve sempre respeitar um padrão onde a <strong>COLUNA A</strong> é a quantidade e a <strong>COLUNA D</strong> é a descrição das mercadorias.
+                        </div>
+                        <div class="container-buttons">
+                            <button type="submit">Processar</button>
+                            {% if xml_filename %}
+                            <a class="download-button" href="{{ url_for('download_file', folder='conv_EXCEL_XML', filename=xml_filename) }}" target="_blank">
+                                Baixar
+                            </a>
+                            {% endif %}
+                        </div>
+                    </form>
+        
+                    <!-- Upload de arquivos XML -->
+                    <form class="container-forms" id="xmlForm" action="/" method="post" enctype="multipart/form-data">
+                        <h2>FILTRAR XML</h2>
+                        <input type="file" id="xmlFile" name="file" accept=".xml" required>
+                        <div class="container-buttons">
+                            <button type="submit">Processar</button>
+                            {% if filtered_xml_filename %}
+                            <a class="download-button" href="{{ url_for('download_file', folder='conv_XML_XML', filename=filtered_xml_filename) }}" target="_blank">
+                                Baixar
+                            </a>
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Links para download dos arquivos convertidos ou filtrados -->
+                <!-- <div class="container-forms container-download">
+
+
+
+                </div> -->
+
+                <!-- Formulário para Limpar Arquivos Filtrados -->
+                <div class="clear-files">
+                    <form action="{{ url_for('clear_files') }}" method="post">
+                        <button type="submit">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="35px" height="35px" baseProfile="basic">
+                                <rect width="42" height="13" x="39" y="11" fill="#0037ff"/>
+                                <polygon points="89.267,111 30.467,111 20.467,27 99.267,27" opacity=".35"/>
+                                <polygon fill="#0075ff" points="90,106 30,106 20,22 100,22"/>
+                                <rect width="92" height="12" x="14" y="23" opacity=".35"/>
+                                <rect width="92" height="12" x="14" y="19" fill="#52afff"/>
+                                <rect width="8" height="52" x="73" y="46" opacity=".35"/>
+                                <rect width="8" height="52" x="39" y="46" opacity=".35"/>
+                                <rect width="8" height="52" x="56" y="46" opacity=".35"/>
+                                <rect width="8" height="52" x="73" y="42" fill="#0037ff"/>
+                                <rect width="8" height="52" x="39" y="42" fill="#0037ff"/>
+                                <rect width="8" height="52" x="56" y="42" fill="#0037ff"/>
+                            </svg>
+                        </button>
+                    </form>
+                </div>  
+            </div>
+        </div>
+    </section>
+
+    <script>
+        document.getElementById('excelForm').addEventListener('submit', function (event) {
+            const fileInput = document.getElementById('excelFile');
+            const file = fileInput.files[0];
+            if (!file || !['application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'].includes(file.type)) {
+                alert('Por favor, envie um arquivo Excel válido (.xls ou .xlsx).');
+                event.preventDefault();
+            }
+        });
+
+        document.getElementById('xmlForm').addEventListener('submit', function (event) {
+            const fileInput = document.getElementById('xmlFile');
+            const file = fileInput.files[0];
+            if (!file || file.type !== 'text/xml') {
+                alert('Por favor, envie um arquivo XML válido.');
+                event.preventDefault();
+            }
+        });
+    </script>
+</body>
+</html>
