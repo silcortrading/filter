@@ -1,0 +1,178 @@
+/* Configurações Gerais */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f8f9fa;
+    color: #212529;
+    line-height: 1.6;
+}
+
+h1 {
+    font-size: 2rem;
+    color: #343a40;
+    text-align: center;
+    margin: 20px 0;
+}
+
+h2 {
+    margin-bottom: 5px;
+    margin-top: 0px;
+}
+
+.container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.subtitle {
+    text-align: center;
+    font-size: 1.2rem;
+    margin-bottom: 30px;
+    color: #6c757d;
+}
+
+/* Estilo dos Formulários */
+.container-forms {
+    background: #ffffff;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.container-forms h3 {
+    font-size: 2rem;
+}
+
+.container-forms a {
+    font-size: 1.2rem;
+}
+
+input[type="file"] {
+    padding: 10px;
+    width: 95.3%;
+    font-size: 1rem;
+    border: 1px solid #ced4da;
+    border-radius: 5px;
+    background-color: #f8f9fa;
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+}
+
+input[type="file"]:hover {
+    border-color: #007bff;
+}
+
+a {
+    text-decoration: none;
+    padding: 5px 10px;
+    background-color: #007bff;
+    color: #ffffff;
+    font-size: 1rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+a:hover {
+    background-color: #0056b3;
+}
+
+
+.container-buttons {
+    padding: 10px 0px;
+    display: flex;
+    gap: 15px;
+}
+
+button {
+    padding: 10px;
+    background-color: #007bff;
+    color: #ffffff;
+    font-size: 1rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+/* Caixa de Aviso */
+.warning-excel {
+    margin-top: 10px;
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeeba;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 0.9rem;
+}
+
+/* Caixa de Mensagens */
+.notification {
+    background-color: #e9ecef;
+    border-left: 4px solid #007bff;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+}
+
+.notification ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.notification ul li {
+    font-size: 1rem;
+    color: #495057;
+}
+
+/* Estilo do formulário de Limpar Arquivos */
+.clear-files {
+    display: flex;
+    justify-content: start;
+    flex-direction: column;
+}
+
+.clear-files button {
+    background-color: transparent;
+    font-size: 0.5rem;
+    border-radius: 50%;
+    border: none;
+    transition: background-color 0.3s ease-in-out;
+    transition: 0.3s;
+}
+
+.clear-files button:hover {
+    transform: scale(1.3);
+}
+
+.container-adjusts {
+    display: grid;
+    grid-template-columns: 90% 10%;
+    gap: 20px;
+}
+
+/* Responsividade */
+@media (max-width: 600px) {
+    .container {
+        padding: 15px;
+    }
+
+    input[type="file"], button {
+        font-size: 0.9rem;
+    }
+
+    .clear-files button {
+        font-size: 0.9rem;
+        padding: 8px 16px;
+    }
+}
