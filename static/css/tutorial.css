@@ -1,0 +1,79 @@
+.list-container {
+  width: 90%;
+  max-width: 600px;
+  margin-top: 20px;
+}
+
+.list-item {
+  margin-bottom: 15px;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #ffffff;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.list-item:hover {
+  transform: scale(1.02);
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+}
+
+.list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  background-color: #f7f7f7;
+  border-bottom: 1px solid #ddd;
+  transition: background-color 0.3s;
+}
+
+.list-header:hover {
+  background-color: #eaeaea;
+}
+
+/* Primeira barra fixa */
+.first-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background-color: #f7f7f7;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.list-header .arrow {
+  font-size: 20px;
+  color: #888;
+  transition: transform 0.3s, color 0.3s;
+}
+
+.list-header .arrow.expanded {
+  transform: rotate(180deg);
+  color: #555;
+}
+
+.list-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease, padding 0.3s ease;
+  padding: 0 20px;
+  background-color: #fafafa;
+}
+
+.list-content img {
+  max-width: 100%;
+  height: auto;
+  margin: 15px 0;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.list-content p {
+  margin: 10px 0;
+  font-size: 16px;
+  color: #555;
+  line-height: 1.5;
+}

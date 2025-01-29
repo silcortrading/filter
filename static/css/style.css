@@ -8,6 +8,13 @@ body {
     line-height: 1.6;
 }
 
+.section {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    gap: 50px;
+}
+
 h1 {
     font-size: 2rem;
     color: #343a40;

@@ -45,40 +45,44 @@ def get_next_filename(directory, prefix):
     return max(numbers) + 1 if numbers else 1
 
 def save_pretty_xml(root, filepath):
-    """Salva um arquivo XML formatado."""
-    dom = xml.dom.minidom.parseString(ET.tostring(root, 'utf-8'))
-    with open(filepath, 'w', encoding='utf-8') as f:
-        f.write(dom.toprettyxml())
+    """Salva um arquivo XML formatado corretamente."""
+    tree = ET.ElementTree(root)
+    with open(filepath, 'wb') as f:
+        tree.write(f, encoding="utf-8", xml_declaration=True)
 
 def extract_lote(descricao):
     """Extrai o valor do lote a partir de uma descrição."""
     match = re.search(r'LOTE:\s*(\w+)', str(descricao))
     return match.group(1) if match else None
 
+def format_descricao(descricao):
+    """Formata a descrição removendo espaços extras."""
+    return re.sub(r'\s{1,}', '', descricao.strip()) if descricao else ''
+
 # Conversão de Excel para XML
 def convert_excel_to_xml(filepath):
     df = pd.read_excel(filepath, header=None)
     selected_columns = df.iloc[:, [0, 3]].copy()
     selected_columns.columns = ['quantidade', 'descricaoMercadoria']
-
-    selected_columns.sort_values(by=['descricaoMercadoria'], inplace=True)
-
+    
+    # Ordena pelo campo 'descricaoMercadoria' (case-insensitive)
+    selected_columns.sort_values(by=['descricaoMercadoria'], key=lambda col: col.str.lower(), inplace=True)
+    selected_columns.reset_index(drop=True, inplace=True)
+    
     root = ET.Element("Root")
     for item_number, (_, row) in enumerate(selected_columns.iterrows(), start=1):
         item_element = ET.SubElement(root, f"item{item_number}")
-        for column in selected_columns.columns:
-            # Substituindo espaços duplos por um único no campo descricaoMercadoria
-            if column == 'descricaoMercadoria':
-                descricao_text = str(row[column]).strip() if pd.notnull(row[column]) else ''
-                descricao_text = re.sub(r'\s{1,}', '', descricao_text)  # Substitui múltiplos espaços por um único
-                ET.SubElement(item_element, column).text = descricao_text
-            else:
-                ET.SubElement(item_element, column).text = str(row[column]) if pd.notnull(row[column]) else ''
+        
+        quantidade = str(row['quantidade']) if pd.notnull(row['quantidade']) else '0'
+        descricao = format_descricao(str(row['descricaoMercadoria'])) if pd.notnull(row['descricaoMercadoria']) else ''
+        
+        ET.SubElement(item_element, "quantidade").text = quantidade
+        ET.SubElement(item_element, "descricaoMercadoria").text = descricao
 
-        lote_value = extract_lote(row['descricaoMercadoria'])
+        lote_value = extract_lote(descricao)
         if lote_value:
             ET.SubElement(item_element, "lote").text = lote_value
-
+            
     xml_filename = f"XML_CONVERTIDO_EXCEL_{get_next_filename(CONV_EXCEL_XML, 'XML_CONVERTIDO_EXCEL')}.xml"
     save_pretty_xml(root, os.path.join(CONV_EXCEL_XML, xml_filename))
     return xml_filename
@@ -97,17 +101,19 @@ def filter_xml_and_generate_new(input_filepath):
 
         for descricao, quantidade in zip(descricao_list, quantidade_list):
             item_element = ET.Element("item")
-
-            quantidade_text = quantidade.text.lstrip('0') if quantidade is not None else '0'
+            
+            if quantidade is not None and quantidade.text is not None:
+                quantidade_text = quantidade.text.lstrip('0')
+            else:
+                quantidade_text = '0'
+                
             try:
                 quantidade_value = int(quantidade_text) / 100000
                 quantidade_text = f"{quantidade_value:.0f}"
             except ValueError:
                 quantidade_text = '0'
 
-            # Substituindo espaços duplos por um único espaço
-            descricao_text = descricao.text.strip() if descricao is not None else ''
-            descricao_text = re.sub(r'\s{1,}', '', descricao_text)  # Substitui múltiplos espaços por um único
+
 
             ET.SubElement(item_element, "quantidade").text = quantidade_text
             ET.SubElement(item_element, "descricaoMercadoria").text = descricao_text
@@ -118,7 +124,10 @@ def filter_xml_and_generate_new(input_filepath):
 
             items.append(item_element)
 
-    items.sort(key=lambda x: x.find("descricaoMercadoria").text.lower())
+    # Ordena os itens pela descrição (case-insensitive)
+    x.find("descricaoMercadoria").text.lower() if x.find("descricaoMercadoria") is not None else ""
+
+    # Renomeia os itens com base na nova ordem
     for idx, item in enumerate(items, start=1):
         item.tag = f"item{idx}"
         new_root.append(item)
@@ -143,13 +152,11 @@ def upload_excel_file():
         try:
             xml_filename = convert_excel_to_xml(filepath)
             flash('Arquivo Excel convertido com sucesso!')
-            # Redireciona após o sucesso
             return redirect(url_for('upload_excel_file', xml_filename=xml_filename))
         except Exception as e:
             logger.error(f"Erro ao converter Excel: {e}")
             flash(f"Erro ao converter o arquivo Excel: {e}")
 
-    # Exibe o resultado, se disponível
     xml_filename = request.args.get('xml_filename')
     return render_template('index.html', xml_filename=xml_filename)
 
@@ -168,13 +175,11 @@ def upload_xml_file():
         try:
             filtered_xml_filename = filter_xml_and_generate_new(filepath)
             flash('Arquivo XML filtrado com sucesso!')
-            # Redireciona após o sucesso
             return redirect(url_for('upload_xml_file', filtered_xml_filename=filtered_xml_filename))
         except Exception as e:
             logger.error(f"Erro ao filtrar XML: {e}")
             flash(f"Erro ao filtrar o arquivo XML: {e}")
 
-    # Exibe o resultado, se disponível
     filtered_xml_filename = request.args.get('filtered_xml_filename')
     return render_template('index.html', filtered_xml_filename=filtered_xml_filename)
 
@@ -194,8 +199,11 @@ def clear_files():
 
 @app.route('/download/<folder>/<filename>')
 def download_file(folder, filename):
-    # Assuming the 'folder' is one of the folders where files are stored
     return send_from_directory(f'./{folder}', filename, as_attachment=True)
+
+@app.route('/ping')
+def ping():
+    return 'Ping recebido'
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))

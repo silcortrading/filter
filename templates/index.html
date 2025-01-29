@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/imports.css') }}">
     <link rel="shortcut icon" href="{{ url_for('static', filename='imgs/logo_silcor.jpg') }}" type="image/x-icon">
     <title>Conversor e Filtro</title>
 </head>
@@ -63,7 +63,7 @@
                 <!-- Formulário para Limpar Arquivos Filtrados -->
                 <div class="clear-files">
                     <form action="{{ url_for('clear_files') }}" method="post">
-                        <button type="submit">
+                        <button type="submit" >
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="35px" height="35px" baseProfile="basic">
                                 <rect width="42" height="13" x="39" y="11" fill="#0037ff"/>
                                 <polygon points="89.267,111 30.467,111 20.467,27 99.267,27" opacity=".35"/>
@@ -83,6 +83,6 @@
             </div>
         </div>
     </section>
-    <script src="{{ url_for('static', filename='script/validation.js') }}"></script>
+    <script src="{{ url_for('static', filename='script/scripts.js') }}"></script>
 </body>
 </html>
