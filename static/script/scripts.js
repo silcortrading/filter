@@ -56,4 +56,4 @@ setInterval(function() {
   fetch('/ping', { method: 'GET' })
       .then(response => response.text())
       .then(data => console.log("Ping recebido", data));
-}, 150000);  // Intervalo de 5 minutos (300000 ms)
+}, 100000); 

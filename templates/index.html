@@ -8,6 +8,9 @@
     <title>Conversor e Filtro</title>
 </head>
 <body>
+    <a class="img-tutorial" href="{{ url_for('static', filename='pages/tutorial.html') }}" target="_blank">
+        <img src="{{ url_for('static', filename='imgs/icon-tutorial-48.png') }}" title="Dúvidas sobre o sistema?">
+    </a>
     <section class="section">
         <div class="container">
             <h1 class="title">Sistema de Conversão e Comparação</h1>
@@ -64,7 +67,7 @@
                 <div class="clear-files">
                     <form action="{{ url_for('clear_files') }}" method="post">
                         <button type="submit" >
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="35px" height="35px" baseProfile="basic">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="45px" height="45px" baseProfile="basic" title="Limpar arquivos">
                                 <rect width="42" height="13" x="39" y="11" fill="#0037ff"/>
                                 <polygon points="89.267,111 30.467,111 20.467,27 99.267,27" opacity=".35"/>
                                 <polygon fill="#0075ff" points="90,106 30,106 20,22 100,22"/>

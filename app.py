@@ -45,10 +45,10 @@ def get_next_filename(directory, prefix):
     return max(numbers) + 1 if numbers else 1
 
 def save_pretty_xml(root, filepath):
-    """Salva um arquivo XML formatado corretamente."""
-    tree = ET.ElementTree(root)
-    with open(filepath, 'wb') as f:
-        tree.write(f, encoding="utf-8", xml_declaration=True)
+    """Salva um arquivo XML formatado."""
+    dom = xml.dom.minidom.parseString(ET.tostring(root, 'utf-8'))
+    with open(filepath, 'w', encoding='utf-8') as f:
+        f.write(dom.toprettyxml())
 
 def extract_lote(descricao):
     """Extrai o valor do lote a partir de uma descrição."""
@@ -66,8 +66,8 @@ def convert_excel_to_xml(filepath):
     selected_columns.columns = ['quantidade', 'descricaoMercadoria']
     
     # Ordena pelo campo 'descricaoMercadoria' (case-insensitive)
-    selected_columns.sort_values(by=['descricaoMercadoria'], key=lambda col: col.str.lower(), inplace=True)
-    selected_columns.reset_index(drop=True, inplace=True)
+    # selected_columns.sort_values(by=['descricaoMercadoria'], key=lambda col: col.str.lower(), inplace=True)
+    # selected_columns.reset_index(drop=True, inplace=True)
     
     root = ET.Element("Root")
     for item_number, (_, row) in enumerate(selected_columns.iterrows(), start=1):
@@ -101,19 +101,15 @@ def filter_xml_and_generate_new(input_filepath):
 
         for descricao, quantidade in zip(descricao_list, quantidade_list):
             item_element = ET.Element("item")
-            
-            if quantidade is not None and quantidade.text is not None:
-                quantidade_text = quantidade.text.lstrip('0')
-            else:
-                quantidade_text = '0'
-                
+
+            quantidade_text = quantidade.text.lstrip('0') if quantidade is not None else '0'
             try:
                 quantidade_value = int(quantidade_text) / 100000
                 quantidade_text = f"{quantidade_value:.0f}"
             except ValueError:
                 quantidade_text = '0'
 
-
+            descricao_text = format_descricao(descricao.text) if descricao is not None else ''
 
             ET.SubElement(item_element, "quantidade").text = quantidade_text
             ET.SubElement(item_element, "descricaoMercadoria").text = descricao_text
@@ -125,7 +121,7 @@ def filter_xml_and_generate_new(input_filepath):
             items.append(item_element)
 
     # Ordena os itens pela descrição (case-insensitive)
-    x.find("descricaoMercadoria").text.lower() if x.find("descricaoMercadoria") is not None else ""
+    # items.sort(key=lambda x: x.find("descricaoMercadoria").text.lower())
 
     # Renomeia os itens com base na nova ordem
     for idx, item in enumerate(items, start=1):
@@ -201,9 +197,9 @@ def clear_files():
 def download_file(folder, filename):
     return send_from_directory(f'./{folder}', filename, as_attachment=True)
 
-@app.route('/ping')
-def ping():
-    return 'Ping recebido'
+@app.route("/tutorial")
+def tutorial():
+    return render_template("tutorial.html")
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
