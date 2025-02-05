@@ -1,3 +1,7 @@
+html, body {
+    height: 100vh; /* Garantir que o corpo ocupe toda a altura da tela */
+}
+
 /* Configurações Gerais */
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -5,7 +9,10 @@ body {
     padding: 0;
     background-color: #f8f9fa;
     color: #212529;
-    line-height: 1.6;
+    line-height: 1.4;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
 .section {
@@ -184,10 +191,11 @@ button:hover {
     }
 }
 
+
 .img-tutorial {
     position: fixed;
     right: 0;
-    margin: 5px 20px;
+    margin: 15px 15px;
     width: 50px;
     transition: transform 0.3s;
     background-color: transparent;
@@ -204,3 +212,9 @@ button:hover {
     cursor: pointer;
     background-color: transparent;
   }
+
+  footer {
+    background-color: #3f454b;
+    color: #ffffff;
+    text-align: center;
+}

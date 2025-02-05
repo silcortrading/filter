@@ -18,10 +18,11 @@ UPLOAD_FOLDER = 'UPLOADS'
 DOWNLOAD_FOLDER = 'downloads'
 CONV_XML_XML = 'conv_XML_XML'
 CONV_EXCEL_XML = 'conv_EXCEL_XML'
+RESULT_FOLDER = 'RESULT'
 ALLOWED_EXTENSIONS = {'xlsx', 'xml'}
 
 # Criar pastas necessárias
-for folder in [UPLOAD_FOLDER, CONV_XML_XML, CONV_EXCEL_XML]:
+for folder in [UPLOAD_FOLDER, CONV_XML_XML, CONV_EXCEL_XML, RESULT_FOLDER]:
     os.makedirs(folder, exist_ok=True)
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -59,16 +60,12 @@ def format_descricao(descricao):
     """Formata a descrição removendo espaços extras."""
     return re.sub(r'\s{1,}', '', descricao.strip()) if descricao else ''
 
-# Conversão de Excel para XML
 def convert_excel_to_xml(filepath):
     df = pd.read_excel(filepath, header=None)
     selected_columns = df.iloc[:, [0, 3]].copy()
     selected_columns.columns = ['quantidade', 'descricaoMercadoria']
     
-    # Ordena pelo campo 'descricaoMercadoria' (case-insensitive)
-    # selected_columns.sort_values(by=['descricaoMercadoria'], key=lambda col: col.str.lower(), inplace=True)
-    # selected_columns.reset_index(drop=True, inplace=True)
-    
+    # Gera o XML
     root = ET.Element("Root")
     for item_number, (_, row) in enumerate(selected_columns.iterrows(), start=1):
         item_element = ET.SubElement(root, f"item{item_number}")
@@ -85,9 +82,40 @@ def convert_excel_to_xml(filepath):
             
     xml_filename = f"XML_CONVERTIDO_EXCEL_{get_next_filename(CONV_EXCEL_XML, 'XML_CONVERTIDO_EXCEL')}.xml"
     save_pretty_xml(root, os.path.join(CONV_EXCEL_XML, xml_filename))
+    
+    # Criação da pasta RESULT caso não exista
+    os.makedirs(RESULT_FOLDER, exist_ok=True)
+
+    # Caminho do arquivo Excel na pasta RESULT
+    result_filename = "result_excel_filter.xlsx"
+    result_filepath = os.path.join(RESULT_FOLDER, result_filename)
+
+    # Se o arquivo Excel já existir, carrega o existente para garantir a estrutura
+    if os.path.exists(result_filepath):
+        existing_df = pd.read_excel(result_filepath)
+        
+        # Garante que o dataframe tenha as colunas esperadas
+        while existing_df.shape[1] < 5:
+            existing_df.insert(existing_df.shape[1], f'Col{existing_df.shape[1] + 2}', '')
+
+        # Insere os novos valores nas colunas A e B
+        existing_df.iloc[:, 0] = selected_columns['quantidade']  # Coluna A
+        existing_df.iloc[:, 1] = selected_columns['descricaoMercadoria']  # Coluna B
+    else:
+        # Se não existir, cria um novo DataFrame com colunas organizadas
+        existing_df = pd.DataFrame({
+            'A': selected_columns['quantidade'],
+            'B': selected_columns['descricaoMercadoria'],
+            'C': [''] * len(selected_columns),
+            'D': [''] * len(selected_columns),
+            'E': [''] * len(selected_columns)
+        })
+
+    # Salva o novo arquivo Excel com as colunas organizadas
+    existing_df.to_excel(result_filepath, index=False)
+
     return xml_filename
 
-# Filtragem de XML
 def filter_xml_and_generate_new(input_filepath):
     tree = ET.parse(input_filepath)
     root = tree.getroot()
@@ -120,16 +148,55 @@ def filter_xml_and_generate_new(input_filepath):
 
             items.append(item_element)
 
-    # Ordena os itens pela descrição (case-insensitive)
-    # items.sort(key=lambda x: x.find("descricaoMercadoria").text.lower())
-
     # Renomeia os itens com base na nova ordem
     for idx, item in enumerate(items, start=1):
         item.tag = f"item{idx}"
         new_root.append(item)
 
+    # Salva o XML filtrado
     xml_filename = f"XML_CONVERTIDO_XML_{get_next_filename(CONV_XML_XML, 'XML_CONVERTIDO_XML')}.xml"
     save_pretty_xml(new_root, os.path.join(CONV_XML_XML, xml_filename))
+
+    # Criação da pasta RESULT caso não exista
+    os.makedirs(RESULT_FOLDER, exist_ok=True)
+
+    # Extrai dados do XML filtrado para adicionar no Excel
+    filtered_data = []
+    for item in items:
+        quantidade = item.find('quantidade').text
+        descricao = item.find('descricaoMercadoria').text
+        filtered_data.append([quantidade, descricao])
+
+    filtered_df = pd.DataFrame(filtered_data, columns=['quantidade', 'descricaoMercadoria'])
+
+    # Caminho do arquivo Excel na pasta RESULT
+    result_filename = f"result_excel_filter.xlsx"
+    result_filepath = os.path.join(RESULT_FOLDER, result_filename)
+
+    # Se o arquivo Excel já existir, carrega o existente para adicionar novas colunas corretamente
+    if os.path.exists(result_filepath):
+        existing_df = pd.read_excel(result_filepath)
+
+        # Garante que o dataframe tenha as colunas esperadas
+        while existing_df.shape[1] < 5:
+            existing_df.insert(existing_df.shape[1], f'Col{existing_df.shape[1] + 2}', '')
+
+        # Insere os novos valores nas colunas D e E
+        existing_df.iloc[:, 3] = filtered_df['quantidade']  # Coluna D
+        existing_df.iloc[:, 4] = filtered_df['descricaoMercadoria']  # Coluna E
+    else:
+        # Se não existir, cria um novo DataFrame com colunas A e B vazias, e D e E preenchidas
+        existing_df = pd.DataFrame({
+            'A': [''] * len(filtered_df),
+            'B': [''] * len(filtered_df),
+            'C': [''] * len(filtered_df),
+            'D': filtered_df['quantidade'],
+            'E': filtered_df['descricaoMercadoria']
+        })
+
+    # Salva o novo arquivo Excel com as colunas organizadas
+    existing_df.to_excel(result_filepath, index=False)
+
     return xml_filename
 
 # Rotas
@@ -182,7 +249,7 @@ def upload_xml_file():
 @app.route('/clear_files', methods=['POST'])
 def clear_files():
     try:
-        for folder in [CONV_XML_XML, CONV_EXCEL_XML, UPLOAD_FOLDER]:
+        for folder in [CONV_XML_XML, CONV_EXCEL_XML, UPLOAD_FOLDER, RESULT_FOLDER]:
             for file in glob.glob(os.path.join(folder, '*')):
                 os.remove(file)
 
@@ -200,6 +267,20 @@ def download_file(folder, filename):
 @app.route("/tutorial")
 def tutorial():
     return render_template("tutorial.html")
+
+@app.route("/ping")
+def ping():
+    return "pong"
+
+@app.route('/download_excel')
+def download_excel():
+    result_filepath = os.path.join(RESULT_FOLDER, "result_excel_filter.xlsx")
+    if os.path.exists(result_filepath):
+        return send_from_directory(RESULT_FOLDER, "result_excel_filter.xlsx", as_attachment=True)
+    else:
+        flash("Arquivo Excel não encontrado.", "error")
+        return redirect(request.referrer)
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))

@@ -3,66 +3,92 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="shortcut icon" href="../imgs/logo_silcor.jpg" type="image/x-icon">
+  <title>Tutorial Filtro e Conversor</title>
+
+  <!-- Font Awesome (para ícones) -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+
+  <!-- Estilos do Bootstrap (carrossel e outros componentes) -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+
+  <!-- Seu arquivo de estilo -->
   <link rel="stylesheet" href="../css/tutorial.css">
-  <title>Conversor e Filtro Tutorial</title>
+
+  <!-- Script jQuery (necessário para o Bootstrap) -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+
+  <!-- Script do Bootstrap -->
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
 </head>
 <body>
-  <div class="tutorial-container">
-    <div class='list-container'>
-        <div class='list-item'>
-          <div class='list-header first-header'>
-            Item 1
-            <span class='arrow'>▼</span>
-          </div>
-          <div class='list-content'>
-            <p>Descrição do item 1. Este é um conteúdo detalhado que pode ser expandido ou ocultado ao clicar.</p>
-            <img src='https://via.placeholder.com/500x300' alt='Imagem do Item 1'>
-          </div>
-        </div>
-        
-        <div class='list-item'>
-          <div class='list-header'>
-            Item 2
-            <span class='arrow'>▼</span>
-          </div>
-          <div class='list-content'>
-            <p>Descrição do item 2. Texto explicativo com imagem ilustrativa abaixo.</p>
-            <img src='https://via.placeholder.com/500x300' alt='Imagem do Item 2'>
-          </div>
-        </div>
-        <div class='list-item'>
-          <div class='list-header'>
-            Item 3
-            <span class='arrow'>▼</span>
-          </div>
-          <div class='list-content'>
-            <p>Descrição do item 3. Conteúdo adicional para explicar o item.</p>
-            <img src='https://via.placeholder.com/500x300' alt='Imagem do Item 3'>
+
+  <section>
+    <div id="carousel" class="carousel slide" data-ride="carousel">
+    
+      <!-- Indicadores do carrossel (bullets) -->
+      <ol class="carousel-indicators">
+        <li data-target="#carousel" data-slide-to="0" class="active"></li>
+        <li data-target="#carousel" data-slide-to="1"></li>
+        <li data-target="#carousel" data-slide-to="2"></li>
+        <li data-target="#carousel" data-slide-to="3"></li>
+      </ol>
+    
+      <!-- Itens do carrossel -->
+      <div class="carousel-inner">
+        <!-- Item 1 -->
+        <div class="carousel-item active">
+          <h5 class="contador">1 / 4</h5>
+          <img src="https://images.unsplash.com/photo-1511576661531-b34d7da5d0bb?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1350&q=80" class="d-block w-100" alt="Imagem 1">
+          <div class="titulo">
+            <h2>Imagem 1</h2>
+            <p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.</p>
           </div>
         </div>
-        <div class='list-item'>
-          <div class='list-header'>
-            Item 4
-            <span class='arrow'>▼</span>
-          </div>
-          <div class='list-content'>
-            <p>Descrição do item 4. Conteúdo adicional para explicar o item.</p>
-            <img src='https://via.placeholder.com/500x300' alt='Imagem do Item 4'>
-          </div>
-        </div>
-        <div class='list-item'>
-          <div class='list-header'>
-            Item 5
-            <span class='arrow'>▼</span>
-          </div>
-          <div class='list-content'>
-            <p>Descrição do item 5. Conteúdo adicional para explicar o item.</p>
-            <img src='https://via.placeholder.com/500x300' alt='Imagem do Item 5'>
+
+        <!-- Item 2 -->
+        <div class="carousel-item">
+          <h5 class="contador">2 / 4</h5>
+          <img src="https://images.unsplash.com/photo-1511576661531-b34d7da5d0bb?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1350&q=80" class="d-block w-100" alt="Imagem 2">
+          <div class="titulo">
+            <h2>Imagem 2</h2>
+            <p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.</p>
           </div>
         </div>
-      </div>
-  </div>
-  <script src="../script/tutorial.js"></script>
+
+        <!-- Item 3 -->
+        <div class="carousel-item">
+          <h5 class="contador">3 / 4</h5>
+          <img src="https://images.unsplash.com/photo-1511576661531-b34d7da5d0bb?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1350&q=80" class="d-block w-100" alt="Imagem 3">
+          <div class="titulo">
+            <h2>Imagem 3</h2>
+            <p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.</p>
+          </div>
+        </div>
+
+        <!-- Item 4 -->
+        <div class="carousel-item">
+          <h5 class="contador">4 / 4</h5>
+          <img src="https://images.unsplash.com/photo-1511576661531-b34d7da5d0bb?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1350&q=80" class="d-block w-100" alt="Imagem 4">
+          <div class="titulo">
+            <h2>Imagem 4</h2>
+            <p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.</p>
+          </div>
+        </div>
+
+      </div> <!-- Fecha os itens do carrossel -->
+    
+      <!-- Controladores (setas) -->
+      <a class="carousel-control-prev" href="#carousel" role="button" data-slide="prev">
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        <span class="sr-only">Previous</span>
+      </a>
+      <a class="carousel-control-next" href="#carousel" role="button" data-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        <span class="sr-only">Next</span>
+      </a>
+    </div> <!-- Fecha o carrossel -->
+
+  </section>
+
 </body>
 </html>
